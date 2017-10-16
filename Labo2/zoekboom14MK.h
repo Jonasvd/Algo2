@@ -91,7 +91,7 @@ public:
 		return nieuw;
 	}
 
-	void voegtoe(const Sleutel& sleutel, const Data& data);
+	ZoekboomMK<Sleutel, Data>* voegtoe(const Sleutel& sleutel, const Data& data);
 	void roteer(bool naarlinks);
 	void inorder(std::function<void(const ZoekknoopMK<Sleutel, Data>&)> bezoek) const;
 	void schrijf(ostream& os) const;
@@ -100,6 +100,8 @@ public:
 	bool controleerZwarteDiepte(int& zwarteDiepte) const;
 	void maakOnevenwichtig();
 	void maakEvenwichtig();
+	void voegtoe_bottomup(const Sleutel& sleutel, const Data& data);
+	ZoekboomMK<Sleutel, Data>* getGrootouder(const ZoekboomMK<Sleutel, Data>& child);
 
 protected:
 	//zoekfunctie zoekt sl en geeft de boom in waaronder de sleutel zit (eventueel een lege boom als de sleutel
@@ -165,27 +167,29 @@ private:
 	}
 };
 
+// CHANGED voegt nu ook kleur toe en returnt de knoop die toegevoegd werd
 template <class Sleutel, class Data>
-void ZoekboomMK<Sleutel, Data>::voegtoe(const Sleutel& sleutel, const Data& data) {
+ZoekboomMK<Sleutel, Data>* ZoekboomMK<Sleutel, Data>::voegtoe(const Sleutel& sleutel, const Data& data) {
 	ZoekboomMK<Sleutel, Data>* plaats;
 	ZoekknoopMK<Sleutel, Data>* ouder;
 	zoek(sleutel, ouder, plaats);
 	if (!*plaats) {
 		//noot: vanaf C++14 wordt dit
 		ZoekboomMK<Sleutel, Data> nieuw = make_unique<ZoekknoopMK<Sleutel, Data> >(sleutel, data);
+		nieuw->wijzigKleur(rood);
 		//tot dan was het:
 		//        ZoekboomMK<Sleutel,Data> nieuw(new ZoekknoopMK<Sleutel,Data>(sleutel,data));
 		nieuw->ouder = ouder;
 		*plaats = move(nieuw);
 	};
-
+	return plaats;
 };
 
 template <class Sleutel, class Data>
 void ZoekboomMK<Sleutel, Data>::zoek(const Sleutel& sleutel, ZoekknoopMK<Sleutel, Data>*& ouder, ZoekboomMK<Sleutel, Data>*& plaats) {
 	plaats = this;
 	ouder = 0;
-	while (plaats && (*plaats)->sleutel != sleutel) {
+	while (plaats && *plaats && (*plaats)->sleutel != sleutel) {
 		ouder = plaats->get();
 		if ((*plaats)->sleutel < sleutel)
 			plaats = &(*plaats)->rechts;
@@ -377,13 +381,96 @@ bool ZoekboomMK<Sleutel, Data>::repOK() const{
 		// er mogen geen twee rode na elkaar voorkomen
 		if ((*it).links && (*it).kleur == rood && (*it).links->kleur == rood) return false;
 		if ((*it).rechts && (*it).kleur == rood && (*it).rechts->kleur == rood) return false;
-
+		
 		hasMore = it.setToNext();
 	}
 
 	// alles ik ok nu, nu nog de zwarte diepte controleren
 	int diepte;
 	return (*this).controleerZwarteDiepte(diepte);
+}
+
+template <class Sleutel, class Data>
+void ZoekboomMK<Sleutel, Data>::voegtoe_bottomup(const Sleutel& sleutel, const Data& data) {
+	ZoekboomMK<int, string>* huidig = this->voegtoe(sleutel, data);
+
+	// zolang
+	// - wortel ('ik' heb dus geen ouder) en zelf rood
+	// - zelf rood en rode ouder
+	while ((!(*huidig)->ouder && (*huidig)->kleur == rood)
+		|| ((*huidig)->kleur == rood && (*huidig)->ouder && (*huidig)->ouder->kleur == rood)) {
+
+		// wortel zelf rood => gewoon zwart maken
+		if (!(*huidig)->ouder && (*huidig)->kleur == rood) {
+			(*huidig)->wijzigKleur(zwart);
+			continue;
+		}
+
+		// zelf rood en rode ouder
+		// alle voorbeelden in de cursus gaan er van uit dat ouder p linkerkind is van grootouder g
+
+		ZoekboomMK<Sleutel, Data>* grootouder = this->getGrootouder(*huidig);
+		bool parentIsLinkerKind = (*grootouder)->links.get() == (*huidig)->ouder;
+		ZoekboomMK<Sleutel, Data>* broer = (*grootouder)->getKind(!parentIsLinkerKind);
+		
+		// (1) broer b van p is rood
+		if ((*broer)->kleur == rood) {
+			// ouder en broer b worden zwart
+			// grootouder g wordt rood
+			(*huidig)->ouder->wijzigKleur(zwart);
+			(*broer)->wijzigKleur(zwart);
+			(*grootouder)->wijzigKleur(rood);
+
+			// onze grootouder is nu rood => testen of er geen problemen zijn met de overgrootouder
+			huidig = grootouder;
+			continue;
+		}
+
+		// (2) broer b van p is zwart
+
+		// we testen eerst of c en p op dezelfde lijn liggen
+		bool opeenlijn = (*huidig)->ouder->getKind(parentIsLinkerKind) == huidig;
+
+		// (2a) op één lijn => roteren over g en p
+		if (opeenlijn) {
+			// g en p roteren zodat de kant langs waar ze liggen kleiner wordt
+			// p wordt zwart, g wordt rood (eerst doen voor het gemak, anders zijn onze knopen verschoven)
+			(*grootouder)->wijzigKleur(rood);
+			(*huidig)->ouder->wijzigKleur(zwart);
+			grootouder->roteer(!parentIsLinkerKind); // parent links => naar rechts roteren
+
+			// probleem zou nu opgelost moeten zijn maar voor de zekerheid gaan we nog eens laten testen
+			huidig = grootouder;
+			continue;
+		}
+
+		// (2b) niet op één lijn => op één lijn brengen => roteren over p en c
+		if (!opeenlijn) {
+			// p en c roteren langs andere kant van waar c ligt
+			ZoekboomMK<Sleutel, Data>* ouder = (*grootouder)->getKind(parentIsLinkerKind);
+			ouder->roteer(parentIsLinkerKind);
+
+			// probleem ligt nu langs andere kant van de NIEUWE ouder
+			// nieuwe kind opvragen via grootouder omdat de grootouder niet veranderd is door de rotatie
+			huidig = (*(*grootouder)->getKind(parentIsLinkerKind))->getKind(parentIsLinkerKind);
+			continue;
+		}
+
+		// als je hier komt is er iets mis
+		cout << "Geen van de gevallen matcht bij voegtoe_bottomup" << endl;
+		break;
+	}
+}
+
+template <class Sleutel, class Data>
+ZoekboomMK<Sleutel, Data>* ZoekboomMK<Sleutel, Data>::getGrootouder(const ZoekboomMK<Sleutel, Data>& child) {
+	ZoekknoopMK<Sleutel, Data>* grootouderknoop = child->ouder->ouder;
+	// als de knoop een ouder heeft kunnen we daar de boom ophalen
+	if (grootouderknoop->ouder)
+		return grootouderknoop->ouder->links.get() == grootouderknoop ? &grootouderknoop->ouder->links : &grootouderknoop->ouder->rechts;
+	
+	// anders is de grootouder de wortel
+	return this;
 }
 
 #endif

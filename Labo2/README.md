@@ -5,4 +5,4 @@
 ## TODO
 
 - [x] repOK()
-- [ ] bottom-up toevoegmethode
+- [x] bottom-up toevoegmethode
