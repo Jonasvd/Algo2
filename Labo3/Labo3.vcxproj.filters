@@ -26,6 +26,12 @@
     <ClInclude Include="DNASequentie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FlessenFabriek.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FlessenFabriekTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

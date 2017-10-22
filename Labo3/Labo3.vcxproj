@@ -116,6 +116,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DNASequentie.h" />
+    <ClInclude Include="FlessenFabriek.h" />
+    <ClInclude Include="FlessenFabriekTests.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

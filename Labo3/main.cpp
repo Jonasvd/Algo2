@@ -1,8 +1,8 @@
 #include "DNASequentie.h"
+#include "FlessenFabriekTests.h"
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <time.h>
 
 using namespace std;
 
@@ -33,7 +33,7 @@ void lees_human(vector<string>& human) {
 }
 
 void bereken(vector<string>& human, vector<string>& chimp) {
-	for (int mens = 0; mens < human.size(); mens++){
+	for (int mens = 0; mens < human.size(); mens++) {
 		DNASequentie seq(human[mens]);
 		int kleinste_mutatie = seq.d(chimp[0]);
 		int kleinste_index = 0;
@@ -49,60 +49,29 @@ void bereken(vector<string>& human, vector<string>& chimp) {
 }
 
 void bereken_kleinste_mutatie() {
-	// alle chimpansee strings in vector steken
-	vector<string> chimp;
-	lees_chimpansees(chimp);
-
-	int mens = 0;
-
-	string line;
-	ifstream file("human.dna");
-	if (file.is_open()) {
-		while (getline(file, line)) {
-			DNASequentie seq(line);
-			int kleinste_mutatie = 9999999999;
-			int kleinste_index = 0;
-
-			for (int i = 0; i < chimp.size(); i++) {
-				int res = seq.d(chimp[i]);
-				if (res < kleinste_mutatie) {
-					kleinste_mutatie = res;
-					kleinste_index = i;
-				}
-			}
-
-			cout << mens << " " << kleinste_index << " " << kleinste_mutatie << endl;
-
-			mens++;
-		}
-		file.close();
-	}
-	else
-		cout << "kan human.dna niet openen" << endl;
-
-}
-
-int main() {
-	/*DNASequentie sequentie("sitting");
-
-	cout << sequentie << endl;
-	cout << sequentie.d("kitten") << endl;*/
-
-	/*cout << "Menselijk " << mens << " => chimpansee " <<  << endl;
-	mens++;*/
-
-	//bereken_kleinste_mutatie();
-	
-	const clock_t begin_time = clock();
-
 	vector<string> human;
 	lees_human(human);
 	vector<string> chimp;
 	lees_chimpansees(chimp);
 	bereken(human, chimp);
+}
 
-	cout << float(clock() - begin_time) / CLOCKS_PER_SEC;
+void mainDNA() {
+	bereken_kleinste_mutatie();
+}
 
+void mainFlessen() {
+	FlessenFabriekTests tests;
+	tests.runTests();
+}
+
+int main() {
+
+	//mainDNA();
+	
+	mainFlessen();
+
+	// Hou console open
 	string s;
 	cin >> s;
 
