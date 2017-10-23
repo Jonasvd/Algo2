@@ -135,6 +135,44 @@ Oplossing& Oplossing::operator=(Oplossing&& other) {
 	return *this;
 }
 
+// *********************************** MEMO
+
+class Memo {
+public:
+	Oplossing vindOplossing(Probleem& probleem);
+	void voegToe(Probleem& probleem, Oplossing oplossing);
+private:
+	map<string, Oplossing> _map;
+	string stringify(Probleem& probleem);
+};
+
+string Memo::stringify(Probleem& probleem) {
+	string res;
+	res += to_string(probleem.volume) + "-";
+	vector<int> aantal;
+	probleem.flessen.aantal(aantal);
+	vector<int> groottes;
+	probleem.flessen.groottes(groottes);
+	for (int i = 0; i < groottes.size(); i++) {
+		res += to_string(groottes[i]) + "(" + to_string(aantal[i]) + ")";
+	}
+	return res;
+}
+
+void Memo::voegToe(Probleem& probleem, Oplossing oplossing) {
+	string key = stringify(probleem);
+	_map.insert(pair<string, Oplossing>(key, oplossing));
+}
+
+Oplossing Memo::vindOplossing(Probleem& probleem) {
+	string key = stringify(probleem);
+	map<string, Oplossing>::const_iterator it = _map.find(key);
+
+	if (it == _map.end()) return Oplossing();
+
+	return it->second;
+}
+
 // *********************************** FABRIEK
 
 class FlessenFabriek {

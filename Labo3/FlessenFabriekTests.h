@@ -170,6 +170,25 @@ bool zoekOplossing5() {
 
 	return areEqual(o, expected);
 }
+bool memo1() {
+	Memo memo;
+
+	// Probleem
+	vector<int> grootte = { 40 };
+	vector<int> aantal = { 10 };
+	Flessen flessen(grootte, aantal);
+	Probleem probleem(160, flessen);
+
+	// Oplossing
+	vector<int> exp_aantal = { 6 };
+	Flessen flessen2(grootte, exp_aantal);
+	Oplossing oplossing(flessen2);
+
+	memo.voegToe(probleem, oplossing);
+	Oplossing opl = memo.vindOplossing(probleem);
+
+	return opl.gevonden;
+}
 
 void FlessenFabriekTests::tests() {
 	assert(constructor1());
@@ -180,6 +199,7 @@ void FlessenFabriekTests::tests() {
 	assert(zoekOplossing3());
 	assert(zoekOplossing4());
 	assert(zoekOplossing5());
+	assert(memo1());
 }
 
 #endif
