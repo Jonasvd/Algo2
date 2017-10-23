@@ -20,8 +20,7 @@ public:
 	void vulbareVolumes(vector<int>& res);
 	int getAantal(int grootte);
 
-	Flessen& operator=(const Flessen& o);
-	Flessen& operator=(Flessen&& o);
+	Flessen& operator=(const Flessen& o) = default;
 	void schrijf(ostream& out);
 private:
 	map<int, int> _map;
@@ -74,16 +73,6 @@ void Flessen::vulbareVolumes(vector<int>& res) {
 	}
 }
 
-Flessen& Flessen::operator=(const Flessen& o) {
-	_map = o._map;
-	return *this;
-}
-
-Flessen& Flessen::operator=(Flessen&& o) {
-	_map = move(o._map);
-	return *this;
-}
-
 void Flessen::schrijf(ostream& out) {
 	for (map<int, int>::const_iterator it = _map.begin(); it != _map.end(); ++it) {
 		out << it->first << "(" << it->second << ") ";
@@ -125,6 +114,7 @@ class Oplossing {
 public:
 	Oplossing() : gevonden(false) {};
 	Oplossing(Flessen flssn) : flessen(flssn), gevonden(true) {};
+	Oplossing(const Oplossing& o) = default;
 	Flessen flessen;
 	bool gevonden;
 
@@ -153,13 +143,14 @@ public:
 	void schrijf();
 	void schrijf(ostream& os);
 
-	void vulVolume(int volume, Oplossing& oplossing);
+	Oplossing vulVolume(int volume);
 private:
 	vector<int> _grootte;
 	vector<int> _aantal;
 	string printDifference(Flessen& voor, Flessen& na);
 
-	void zoekOplossing(Probleem& probleem, Oplossing& oplossing, int& besteOplossing, int huidigNiveau);
+	Oplossing zoekOplossing(Probleem& probleem, int& besteOplossing, int huidigNiveau);
+	
 };
 
 void FlessenFabriek::schrijf() {
@@ -193,14 +184,14 @@ string FlessenFabriek::printDifference(Flessen& voor, Flessen& na) {
 	return result;
 }
 
-void FlessenFabriek::vulVolume(int volume, Oplossing& oplossing) {
+Oplossing FlessenFabriek::vulVolume(int volume) {
 	Flessen flssn(_grootte, _aantal);
 	Probleem prob(volume, flssn);
 	
 	int beste = -1;
-	zoekOplossing(prob, oplossing, beste, 0);
+	Oplossing oplossing = zoekOplossing(prob, beste, 0);
 
-	if (oplossing.gevonden) {
+	/*if (oplossing.gevonden) {
 		cout << "Oplossing voor volume " << volume << " in " << beste << " flessen:" << endl;
 		cout << "  flessen voor:\t";
 		flssn.schrijf(cout);
@@ -212,22 +203,18 @@ void FlessenFabriek::vulVolume(int volume, Oplossing& oplossing) {
 	}
 	else {
 		cout << "Geen oplossing voor volume " << volume << endl;
-	}
+	}*/
+	return move(oplossing);
 }
 
-void FlessenFabriek::zoekOplossing(Probleem& probleem, Oplossing& oplossing, int& besteOplossing, int huidigNiveau) {
+Oplossing FlessenFabriek::zoekOplossing(Probleem& probleem, int& besteOplossing, int huidigNiveau) {
 	// Volume onder nul => geen oplossing
-	if (probleem.volume < 0) {
-		//cout << "geen oplossing voor " + probleem.str() << endl;;
-		oplossing = Oplossing();
-		return;
-	}
+	if (probleem.volume < 0) return Oplossing();
 	
 	// Volume is nul => oplossing gevonden
 	if (probleem.volume == 0) {
-		oplossing = Oplossing(probleem.flessen);
 		besteOplossing = huidigNiveau;
-		return;
+		return Oplossing(probleem.flessen);
 	}
 
 	// Haal alle volumes op waar er nog flessen van zijn die kunnen gevuld worden
@@ -236,17 +223,10 @@ void FlessenFabriek::zoekOplossing(Probleem& probleem, Oplossing& oplossing, int
 	sort(volumes.rbegin(), volumes.rend()); // Reverse sorteren
 
 	// Volume maar geen flessen meer => geen oplossing
-	if (probleem.volume > 0 && volumes.size() == 0) {
-		//cout << "geen oplossing voor " + probleem.str() << endl;;
-		oplossing = Oplossing();
-		return;
-	}
+	if (probleem.volume > 0 && volumes.size() == 0) return Oplossing();
 
 	// Er is een (voorlopig) beste oplossing en je gebruikt nu al meer flessen dan die => al stoppen
-	if (besteOplossing != -1 && huidigNiveau > besteOplossing) {
-		oplossing = Oplossing();
-		return;
-	}
+	if (besteOplossing != -1 && huidigNiveau > besteOplossing) return Oplossing();
 		
 	
 	//cout << "(" << huidigNiveau << ") zoek oplossing voor " << probleem.str() << endl;
@@ -259,9 +239,9 @@ void FlessenFabriek::zoekOplossing(Probleem& probleem, Oplossing& oplossing, int
 		deelprobleem.volume -= volumes[i]; // grootte aftrekken
 		deelprobleem.flessen.haalFlesWeg(volumes[i]); // er is dan ook een fles minder van dat volume
 
-		Oplossing opl;
+		
 		int lokaleBesteOplossing = besteOplossing;
-		zoekOplossing(deelprobleem, opl, lokaleBesteOplossing, huidigNiveau + 1);
+		Oplossing opl = zoekOplossing(deelprobleem, lokaleBesteOplossing, huidigNiveau + 1);
 
 		if (opl.gevonden && (besteOplossing == -1 || lokaleBesteOplossing < besteOplossing)) {
 			//cout << "betere oplossing gevonden voor " << deelprobleem.str() << endl;
@@ -271,7 +251,7 @@ void FlessenFabriek::zoekOplossing(Probleem& probleem, Oplossing& oplossing, int
 	}
 
 	// Als er geen oplossing gevonden is zal voorlopigBeste.gevonden == false => gewoon teruggeven
-	oplossing = move(voorlopigBeste);
+	return move(voorlopigBeste);
 }
 
 #endif

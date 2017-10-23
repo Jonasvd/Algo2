@@ -14,4 +14,4 @@
 
 - [x] zoekOplossing()
 - [ ] memo toevoegen
-- [ ] resultaat beter testen
+- [x] resultaat beter testen
