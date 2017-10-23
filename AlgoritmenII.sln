@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Labo1", "Labo1\Labo1.vcxproj", "{EAE68400-0307-4EF9-91A1-8BA27B543905}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Labo2", "..\..\UGent\Algoritmen II\labo\AlgoritmenII\Labo2\Labo2.vcxproj", "{747FB931-39FE-420A-9C45-50586EB6345F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Labo2", "Labo2\Labo2.vcxproj", "{747FB931-39FE-420A-9C45-50586EB6345F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Labo3", "Labo3\Labo3.vcxproj", "{81512084-AD52-4AE0-A777-D0E92603788B}"
 EndProject
