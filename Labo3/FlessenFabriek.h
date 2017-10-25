@@ -19,6 +19,7 @@ public:
 	bool haalFlesWeg(int grootte);
 	void vulbareVolumes(vector<int>& res);
 	int getAantal(int grootte);
+	int totaalAantalFlessen();
 
 	Flessen& operator=(const Flessen& o) = default;
 	void schrijf(ostream& out);
@@ -77,6 +78,14 @@ void Flessen::schrijf(ostream& out) {
 	for (map<int, int>::const_iterator it = _map.begin(); it != _map.end(); ++it) {
 		out << it->first << "(" << it->second << ") ";
 	}
+}
+
+int Flessen::totaalAantalFlessen() {
+	int result = 0;
+	for (map<int, int>::const_iterator it = _map.begin(); it != _map.end(); ++it) {
+		result += it->second;
+	}
+	return result;
 }
 
 // *********************************** PROBLEEM
@@ -187,8 +196,9 @@ private:
 	vector<int> _aantal;
 	string printDifference(Flessen& voor, Flessen& na);
 
-	Oplossing zoekOplossing(Probleem& probleem, int& besteOplossing, int huidigNiveau);
+	Oplossing zoekOplossing(Probleem& probleem, int& besteOplossing, int oorspronkelijkAantalFlessen);
 	
+	Memo memo;
 };
 
 void FlessenFabriek::schrijf() {
@@ -223,37 +233,30 @@ string FlessenFabriek::printDifference(Flessen& voor, Flessen& na) {
 }
 
 Oplossing FlessenFabriek::vulVolume(int volume) {
-	Flessen flssn(_grootte, _aantal);
-	Probleem prob(volume, flssn);
-	
-	int beste = -1;
-	Oplossing oplossing = zoekOplossing(prob, beste, 0);
+	Flessen flessen(_grootte, _aantal);
+	Probleem prob(volume, flessen);
 
-	/*if (oplossing.gevonden) {
-		cout << "Oplossing voor volume " << volume << " in " << beste << " flessen:" << endl;
-		cout << "  flessen voor:\t";
-		flssn.schrijf(cout);
-		cout << endl;
-		cout << "  flessen na:\t";
-		oplossing.flessen.schrijf(cout);
-		cout << endl;
-		cout << "  => " << printDifference(flssn, oplossing.flessen) << endl;
-	}
-	else {
-		cout << "Geen oplossing voor volume " << volume << endl;
-	}*/
-	return move(oplossing);
+	int oorspronkelijkAantalFlessen = flessen.totaalAantalFlessen();
+
+	int beste = -1;
+	Oplossing oplossing = zoekOplossing(prob, beste, oorspronkelijkAantalFlessen);
+	return oplossing;
 }
 
-Oplossing FlessenFabriek::zoekOplossing(Probleem& probleem, int& besteOplossing, int huidigNiveau) {
+Oplossing FlessenFabriek::zoekOplossing(Probleem& probleem, int& besteOplossing, int oorspronkelijkAantalFlessen) {
+	// Kijken of nog niet opgelost
+	Oplossing memoOpl = memo.vindOplossing(probleem);
+	if (memoOpl.gevonden) return move(memoOpl);
+	
 	// Volume onder nul => geen oplossing
 	if (probleem.volume < 0) return Oplossing();
-	
+
+	// Er is een (voorlopig) beste oplossing en je gebruikt nu al meer flessen dan die => al stoppen
+	int gebruikteFlessen = oorspronkelijkAantalFlessen - probleem.flessen.totaalAantalFlessen();
+	if (besteOplossing != -1 && gebruikteFlessen > besteOplossing) return Oplossing();
+
 	// Volume is nul => oplossing gevonden
-	if (probleem.volume == 0) {
-		besteOplossing = huidigNiveau;
-		return Oplossing(probleem.flessen);
-	}
+	if (probleem.volume == 0) return Oplossing(probleem.flessen);
 
 	// Haal alle volumes op waar er nog flessen van zijn die kunnen gevuld worden
 	vector<int> volumes;
@@ -263,12 +266,6 @@ Oplossing FlessenFabriek::zoekOplossing(Probleem& probleem, int& besteOplossing,
 	// Volume maar geen flessen meer => geen oplossing
 	if (probleem.volume > 0 && volumes.size() == 0) return Oplossing();
 
-	// Er is een (voorlopig) beste oplossing en je gebruikt nu al meer flessen dan die => al stoppen
-	if (besteOplossing != -1 && huidigNiveau > besteOplossing) return Oplossing();
-		
-	
-	//cout << "(" << huidigNiveau << ") zoek oplossing voor " << probleem.str() << endl;
-
 	// Een (betere) oplossing zoeken
 	Oplossing voorlopigBeste;
 	for (int i = 0; i < volumes.size(); i++) {
@@ -277,16 +274,17 @@ Oplossing FlessenFabriek::zoekOplossing(Probleem& probleem, int& besteOplossing,
 		deelprobleem.volume -= volumes[i]; // grootte aftrekken
 		deelprobleem.flessen.haalFlesWeg(volumes[i]); // er is dan ook een fles minder van dat volume
 
-		
-		int lokaleBesteOplossing = besteOplossing;
-		Oplossing opl = zoekOplossing(deelprobleem, lokaleBesteOplossing, huidigNiveau + 1);
+		Oplossing opl = zoekOplossing(deelprobleem, besteOplossing, oorspronkelijkAantalFlessen);
+		int gebruikteFlessen = oorspronkelijkAantalFlessen - opl.flessen.totaalAantalFlessen();
 
-		if (opl.gevonden && (besteOplossing == -1 || lokaleBesteOplossing < besteOplossing)) {
-			//cout << "betere oplossing gevonden voor " << deelprobleem.str() << endl;
-			besteOplossing = lokaleBesteOplossing;
+		if (opl.gevonden && (!voorlopigBeste.gevonden || besteOplossing == -1 || gebruikteFlessen < besteOplossing)) {
+			besteOplossing = gebruikteFlessen;
 			voorlopigBeste = move(opl);
 		}
 	}
+
+	// Als oplossing gevonden => toevoegen aan memo
+	if (voorlopigBeste.gevonden) memo.voegToe(probleem, voorlopigBeste);
 
 	// Als er geen oplossing gevonden is zal voorlopigBeste.gevonden == false => gewoon teruggeven
 	return move(voorlopigBeste);
