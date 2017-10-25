@@ -13,5 +13,5 @@
 ### TODO
 
 - [x] zoekOplossing()
-- [ ] memo toevoegen
+- [x] memo toevoegen
 - [x] resultaat beter testen
