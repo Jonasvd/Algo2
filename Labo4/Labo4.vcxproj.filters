@@ -26,5 +26,11 @@
     <ClInclude Include="PointQuadtreeTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="csv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Spiraal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

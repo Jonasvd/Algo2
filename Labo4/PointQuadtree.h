@@ -49,6 +49,7 @@ public:
 	PointQuadtree<X, Y>* zoek(const Point<X, Y>& point);
 	void voegToe(const Point<X, Y>& point);
 	bool pointEquals(const Point<X, Y>& point);
+	int diepte();
 private:
 
 };
@@ -89,6 +90,19 @@ void PointQuadtree<X,Y>::voegToe(const Point<X,Y>& point) {
 template <class X, class Y>
 bool PointQuadtree<X,Y>::pointEquals(const Point<X,Y>& point) {
 	return (*this)->point == point;
+}
+
+template <class X, class Y>
+int PointQuadtree<X, Y>::diepte() {
+	if (!*this) return 0;
+
+	int maxdiepte = 0;
+	for (int i = 0; i < 4; i++) {
+		int diepte = (*this)->kinderen[i].diepte();
+		if (diepte > maxdiepte)
+			maxdiepte = diepte;
+	}
+	return maxdiepte + 1;
 }
 
 // ************************************* POINTKNOOP

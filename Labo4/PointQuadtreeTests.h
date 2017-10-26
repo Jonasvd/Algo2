@@ -95,7 +95,15 @@ bool voegToe1() {
 	Point<int, int> point2(8, 12);
 	pqt.voegToe(point2);
 
-	return false;
+	return pqt.diepte() == 2;
+}
+bool voegToe2() {
+	PointQuadtree<int, int> pqt;
+
+	Point<int, int> point2(8, 12);
+	pqt.voegToe(point2);
+
+	return pqt.diepte() == 1;
 }
 
 void PointQuadtreeTests::tests() {
@@ -106,6 +114,8 @@ void PointQuadtreeTests::tests() {
 	assert(zoek2());
 	assert(zoek3());
 	assert(voegToe1());
+	assert(voegToe2());
+
 }
 
 #endif
