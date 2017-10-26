@@ -5,3 +5,5 @@
 [Labo 2: Rood-zwarte bomen](https://github.com/Jonasvd/Algo2/tree/master/Labo2)
 
 [Labo 3: DNA en flessen](https://github.com/Jonasvd/Algo2/tree/master/Labo3)
+
+[Labo 4: Point Quadtree en spiraal](https://github.com/Jonasvd/Algo2/tree/master/Labo4)
